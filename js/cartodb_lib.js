@@ -23,22 +23,18 @@ var CartoDbLib = {
       CartoDbLib.map = new L.Map('mapCanvas', { 
         center: CartoDbLib.map_centroid,
         zoom: CartoDbLib.defaultZoom,
-        track_id: CartoDbLib.maptiks_tracking_code,
-        sa_id: '2nd City Zoning'
       });
 
       CartoDbLib.google = new L.Google('ROADMAP', {animate: false});
         
       CartoDbLib.satellite = L.tileLayer('https://{s}.tiles.mapbox.com/v3/datamade.k92mcmc8/{z}/{x}/{y}.png', {
         attribution: '<a href="http://www.mapbox.com/about/maps/" target="_blank">Terms &amp; Feedback</a>',
-        detectRetina: true,
-        sa_id: 'satellite'
+        detectRetina: true
       });
         
       CartoDbLib.buildings = L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors',
-        detectRetina: true,
-        sa_id: 'buildings'
+        detectRetina: true
       });
 
       CartoDbLib.baseMaps = {"Streets": CartoDbLib.google, "Building addresses": CartoDbLib.buildings, "Satellite": CartoDbLib.satellite};
@@ -55,8 +51,12 @@ var CartoDbLib = {
       // method that we will use to update the control based on feature properties passed
       CartoDbLib.info.update = function (props) {
         if (props) {
-          var zone_info = CartoDbLib.getZoneInfo(props.zone_class);
-          this._div.innerHTML = "<img src='/images/icons/" + zone_info.zone_icon + ".png' /> " + props.zone_class + " - " + zone_info.title;
+          if (props.hasOwnProperty("zone_1"))
+            this._div.innerHTML = "<img src='/images/icons/parking.png' /> Parking Permit " + props.zone_1;
+          else {
+            var zone_info = CartoDbLib.getZoneInfo(props.zone_class);
+            this._div.innerHTML = "<img src='/images/icons/" + zone_info.zone_icon + ".png' /> " + props.zone_class + " - " + zone_info.title;
+          }
         }
         else {
           this._div.innerHTML = 'Hover over an area';
@@ -100,21 +100,38 @@ var CartoDbLib = {
             CartoDbLib.getOneZone(data['cartodb_id'], latlng);
           })
 
-          // after layer is loaded, add the layer toggle control
-          L.control.layers(CartoDbLib.baseMaps, {"Zoning": layer}, { collapsed: false, autoZIndex: true }).addTo(CartoDbLib.map);
+          //parking layer
+          var parking_subLayerOptions = {
+            sql: "SELECT * FROM city_of_chicago_parking_permit_zones",
+            interactivity: 'zone_1'
+          }
 
-          // CartoDbLib.map.on('zoomstart', function(e){
-          //   sublayer.hide();
-          // })
-          // google.maps.event.addListener(CartoDbLib.google._google, 'idle', function(e){
-          //   sublayer.show();
-          // })
+          cartodb.createLayer(CartoDbLib.map, "https://datamade.cartodb.com/api/v2_1/viz/7c4c8c54-1127-11e5-b041-0e853d047bba/viz.json", {cartodb_logo: false})
+          .done(function(parking_layer) {
+            parking_sublayer = parking_layer.getSubLayer(0);
+            parking_sublayer.set(parking_subLayerOptions);
+            parking_sublayer.setInteraction(true);
+            parking_sublayer.on('featureOver', function(e, latlng, pos, data, subLayerIndex){
+                $('#mapCanvas div').css('cursor','pointer');
+                CartoDbLib.info.update(data);
+            })
+            // parking_sublayer.on('featureOut', function(e, latlng, pos, data, subLayerIndex){
+            //     $('#mapCanvas div').css('cursor','inherit');
+            //     CartoDbLib.info.clear();
+            // })
 
-          window.setTimeout(function(){
-            if($.address.parameter('id')){
-              CartoDbLib.getOneZone($.address.parameter('id'))
-            }
-          }, 500)
+            // after layer is loaded, add the layer toggle control
+            L.control.layers(CartoDbLib.baseMaps, {"Zoning": layer, "Parking permits": parking_layer}, { collapsed: false, autoZIndex: true }).addTo(CartoDbLib.map);
+
+            window.setTimeout(function(){
+              if($.address.parameter('id')){
+                CartoDbLib.getOneZone($.address.parameter('id'))
+              }
+            }, 500)
+
+          }).on('error', function() {
+            //log the error
+          });
         }).error(function(e) {
           //console.log('ERROR')
           //console.log(e)
