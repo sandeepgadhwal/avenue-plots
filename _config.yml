@@ -1,19 +1,19 @@
 port:  5000
 markdown: kramdown
-name: 2nd City Zoning
-title: 2nd City Zoning
-url: https://secondcityzoning.org
+name: Avenue Realty
+title: Avenue Realty
+url: http://Avenue.in/plots
 description: "An interactive map that lets you find out how your building is zoned, learn where to locate your business and explore zoning patterns throughout Chicago."
 encoding: utf-8
-timezone: America/Chicago
+timezone: 	Asia/Kolkata
 permalink: pretty
 navigation:
-- text: "<i class='fa fa-fw fa-map-marker'></i> Map"
+- text: Home
   url: /
-- text: "<i class='fa fa-fw fa-list'></i> Zoning districts"
+- text: Zoning districts
   url: /zones/
   category: zones
-- text: "<i class='fa fa-fw fa-book'></i> Zoning rules"
-  url: /zoning_rules/
-- text: "<i class='fa fa-fw fa-info-circle'></i> About"
+# - text: Zoning rules
+#   url: /zoning_rules/
+- text: About
   url: /about/

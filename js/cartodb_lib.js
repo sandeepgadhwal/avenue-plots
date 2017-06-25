@@ -1,13 +1,14 @@
 var CartoDbLib = CartoDbLib || {};
 var CartoDbLib = {
 
-  map_centroid:    [41.87811, -87.66677],
-  defaultZoom:     11,
+  map_centroid:    [16.50,80.51],
+  defaultZoom:     13,
   lastClickedLayer: null,
-  locationScope:   "chicago",
-  currentPinpoint: null,
-  layerUrl: 'https://datamade.cartodb.com/api/v2/viz/1362b06a-3345-11e6-9b44-0ef7f98ade21/viz.json',
-  tableName: 'zoning_asof_19may2016',
+  locationScope:   "Vijayawada",
+  currentPinpoint: true,
+  layerUrl: 'http://localhost/user/dev/api/v2/viz/062ed0b4-5918-11e7-bacc-0242ac110002/viz.json',
+  tableName: 'major_roads',
+  maptiks_tracking_code: '',
 
   initialize: function(){
 
@@ -22,28 +23,35 @@ var CartoDbLib = {
       CartoDbLib.map = new L.Map('mapCanvas', { 
         center: CartoDbLib.map_centroid,
         zoom: CartoDbLib.defaultZoom,
-        track_id: CartoDbLib.maptiks_tracking_code,
-        sa_id: '2nd City Zoning'
+        layers: CartoDbLib.basemap
       });
-
-      CartoDbLib.google = new L.Google('ROADMAP', {animate: false});
+	  
+	  
+	var api_key = 'pk.eyJ1IjoiZGlnaXRhbGdsb2JlIiwiYSI6ImNpcGg5dDdjdDAxMmt1OW5qdzUzMWMxamUifQ.8nfM3INfFUehVzKhmNOrJQ';
+	vrecent = L.tileLayer('https://{s}.tiles.mapbox.com/v4/digitalglobe.nal0g75k/{z}/{x}/{y}.png?access_token=' + api_key, {
+    minZoom: 1,
+    maxZoom: 19,
+    attribution: '(c) <a href="https://microsites.digitalglobe.com/interactive/basemap_vivid/">DigitalGlobe</a>'
+	}).addTo(CartoDbLib.map);
+	  
+      //CartoDbLib.google = new L.Google('ROADMAP', {animate: false});
         
-      CartoDbLib.satellite = L.tileLayer('https://{s}.tiles.mapbox.com/v3/datamade.k92mcmc8/{z}/{x}/{y}.png', {
+      /*CartoDbLib.satellite = L.tileLayer('https://{s}.tiles.mapbox.com/v3/datamade.k92mcmc8/{z}/{x}/{y}.png', {
         attribution: '<a href="http://www.mapbox.com/about/maps/" target="_blank">Terms &amp; Feedback</a>',
         detectRetina: true,
         sa_id: 'satellite'
-      });
+      }).addTo(CartoDbLib.map);*/
         
-      CartoDbLib.buildings = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors',
-        detectRetina: true,
-        sa_id: 'buildings'
-      });
-
-      CartoDbLib.baseMaps = {"Streets": CartoDbLib.google, "Building addresses": CartoDbLib.buildings, "Satellite": CartoDbLib.satellite};
-      CartoDbLib.map.addLayer(CartoDbLib.google);
+      //CartoDbLib.basemap = L.tileLayer('http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
+      //attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, &copy; <a href="http://cartodb.com/attributions">CartoDB</a>'
+      //}).addTo(CartoDbLib.map);
+	  
+      //CartoDbLib.baseMaps = {"Basemap": CartoDbLib.basemap, "Satellite": CartoDbLib.satellite};
+      //CartoDbLib.map.addLayer(CartoDbLib.google);
 
       CartoDbLib.info = L.control({position: 'bottomleft'});
+      CartoDbLib.coinfo = L.control({position: 'bottomleft'});
+      CartoDbLib.spinfo = L.control({position: 'bottomleft'});
 
       CartoDbLib.info.onAdd = function (map) {
           this._div = L.DomUtil.create('div', 'info'); // create a div with a class "info"
@@ -51,42 +59,69 @@ var CartoDbLib = {
           return this._div;
       };
 
+      CartoDbLib.coinfo.onAdd = function (map) {
+          this._div = L.DomUtil.create('div', 'coinfo'); // create a div with a class "info"
+          $(this._div).hide();
+          return this._div;
+      };
+      CartoDbLib.spinfo.onAdd = function (map) {
+          this._div = L.DomUtil.create('div', 'spinfo'); // create a div with a class "info"
+          $(this._div).hide();
+          return this._div;
+      };
+
       // method that we will use to update the control based on feature properties passed
       CartoDbLib.info.update = function (props) {
+      
         if (props) {
-          var zone_info = CartoDbLib.getZoneInfo(props.zone_class);
-          this._div.innerHTML = "<img src='/images/icons/" + zone_info.zone_icon + ".png' /> " + props.zone_class + " - " + zone_info.title;
-        }
-        else {
+          var zone_info = CartoDbLib.getZoneInfo(props.zonedist);
+          this._div.innerHTML = "<img src='/images/icons/" + zone_info.zone_icon + ".png' /> " + props.zonedist + " - " + zone_info.shortdescription;
+        } else {
           this._div.innerHTML = 'Hover over an area';
         }
+        $(this._div).show();
+      };
+
+      CartoDbLib.coinfo.update = function (props) {
+        this._div.innerHTML = "<img src='/images/icons/commercial.png' /> Commercial Overlay: " + props.overlay;
+        $(this._div).show();
+      };
+
+      CartoDbLib.spinfo.update = function (props) {
+        console.log(props);
+        this._div.innerHTML = "Special Purpose District: " + props.sdname;
+        $(this._div).show();
       };
 
       CartoDbLib.info.clear = function(){
-        this._div.innerHTML = '';
+        $(this._div).hide();
+      };
+
+      CartoDbLib.coinfo.clear = function(){
+
+ 
+        $(this._div).hide();
+      };
+
+      CartoDbLib.spinfo.clear = function(){
+
+ 
+        $(this._div).hide();
       };
 
       CartoDbLib.info.addTo(CartoDbLib.map);
+      CartoDbLib.coinfo.addTo(CartoDbLib.map);
+      CartoDbLib.spinfo.addTo(CartoDbLib.map);
 
-      var fields = "cartodb_id, zone_type, zone_class, ordinance_"
-      var layerOpts = {
-        user_name: 'datamade',
-        type: 'cartodb',
-        cartodb_logo: false,
-        sublayers: [
-          {
-            sql: "select * from " + CartoDbLib.tableName,
-            cartocss: $('#second-city-zoning-styles').html().trim(),
-            interactivity: fields
-          }
-        ]
-      }
+      var fields = "cartodb_id"
 
-      CartoDbLib.dataLayer = cartodb.createLayer(CartoDbLib.map, layerOpts, { https: true })
+
+      cartodb.createLayer(CartoDbLib.map, CartoDbLib.layerUrl )
         .addTo(CartoDbLib.map)
         .done(function(layer) {
+          CartoDbLib.majorroads = layer;
           var sublayer = layer.getSubLayer(0);
-          sublayer.setInteraction(true);
+          sublayer.setInteraction(false);
           sublayer.on('featureOver', function(e, latlng, pos, data, subLayerIndex) {
             $('#mapCanvas div').css('cursor','pointer');
             CartoDbLib.info.update(data);
@@ -99,8 +134,6 @@ var CartoDbLib = {
             CartoDbLib.getOneZone(data['cartodb_id'], latlng);
           })
 
-          // after layer is loaded, add the layer toggle control
-          L.control.layers(CartoDbLib.baseMaps, {"Zoning": layer}, { collapsed: false, autoZIndex: true }).addTo(CartoDbLib.map);
 
           // CartoDbLib.map.on('zoomstart', function(e){
           //   sublayer.hide();
@@ -114,69 +147,166 @@ var CartoDbLib = {
               CartoDbLib.getOneZone($.address.parameter('id'))
             }
           }, 500)
+
+          CartoDbLib.drawLayerControl();
+
         }).error(function(e) {
           //console.log('ERROR')
           //console.log(e)
         }); 
+
+        //add the Commercial Overlay Layer
+        var layerStyle = $('#internal_roads-style').text();
+        cartodb.createLayer(CartoDbLib.map, {
+          user_name: 'dev',
+          type: 'cartodb',
+          sublayers: [{
+            sql: "SELECT * FROM internal_roads",
+            cartocss: layerStyle,
+          }],
+		  extra_params: {
+			  map_key: "c6d0788f0f96c7db86fedfff84594aa60d2f8c08"
+		  }
+        })
+        .addTo(CartoDbLib.map)
+        .done(function(layer) {
+          
+          var sublayer = layer.getSubLayer(0);
+          sublayer.setInteraction(true);
+		  sublayer.setInteractivity('cartodb_id');
+          sublayer.on('featureOver', function(e, latlng, pos, data, subLayerIndex) {
+            $('#mapCanvas div').css('cursor','pointer');
+            CartoDbLib.coinfo.update(data);
+            console.log(data);
+          });
+
+          sublayer.on('featureOut', function(e, latlng, pos, data, subLayerIndex) {
+            $('#mapCanvas div').css('cursor','inherit');
+            CartoDbLib.coinfo.clear();
+          });
+
+          CartoDbLib.internalroads = layer;
+          CartoDbLib.drawLayerControl();
+        })
+
+        //add the special purpose districts layer
+        var layerStyle = $('#splayer-style').text();
+        cartodb.createLayer(CartoDbLib.map, {
+          user_name: 'votedevin',
+          type: 'cartodb',
+          sublayers: [{
+            sql: "SELECT * FROM road",
+            cartocss: layerStyle
+          }]
+        })
+     
+        .done(function(layer) {
+
+          var sublayer = layer.getSubLayer(0);
+          sublayer.setInteraction(true);
+          sublayer.setInteractivity('cartodb_id,sdname');
+          sublayer.on('featureOver', function(e, latlng, pos, data, subLayerIndex) {
+            console.log('featureOver');
+            $('#mapCanvas div').css('cursor','pointer');
+            CartoDbLib.spinfo.update(data);
+          });
+
+          sublayer.on('featureOut', function(e, latlng, pos, data, subLayerIndex) {
+            $('#mapCanvas div').css('cursor','inherit');
+            CartoDbLib.coinfo.clear();
+          });
+
+          CartoDbLib.splayer = layer;
+          CartoDbLib.drawLayerControl();
+        })
+
+        var layerStyle = $('#lhlayer-style').text();
+        console.log(layerStyle);
+        cartodb.createLayer(CartoDbLib.map, {
+          user_name: 'votedevin',
+          type: 'cartodb',
+          sublayers: [{
+            sql: "SELECT * FROM nylh",
+            cartocss: layerStyle
+          }]
+        })
+        //.addTo(CartoDbLib.map)
+        .done(function(layer) {
+          CartoDbLib.lhlayer = layer;
+      
+          CartoDbLib.drawLayerControl();
+        })
+		
+		var layerStyle = $('#fslayer-style').text();
+        console.log(layerStyle);
+        cartodb.createLayer(CartoDbLib.map, {
+          user_name: 'votedevin',
+          type: 'cartodb',
+          sublayers: [{
+            sql: "SELECT * FROM fsny",
+            cartocss: layerStyle
+          }]
+        })
+        //.addTo(CartoDbLib.map)
+        .done(function(layer) {
+          CartoDbLib.fslayer = layer;
+      
+          CartoDbLib.drawLayerControl();
+        })
+
+
       }
 
     CartoDbLib.doSearch();
   },
 
-  getZoneInfo: function(zone_class) {
-    // console.log("looking up zone_class: " + zone_class);
-    // PD and PMD have different numbers for each district. Fix for displaying generic title and link.
-    if (zone_class.substring(0, 'PMD'.length) === 'PMD') {
-      title = 'Planned Manufacturing District';
-      description = "All kinds of manufacturing, warehouses, and waste disposal. Special service district - not technically a manufacturing district - intended to protect the city's industrial base.";
-      zone_class_link = "PMD";
-      project_link = "https://gisapps.cityofchicago.org/gisimages/zoning_pds/" + zone_class.replace(" ","") + ".pdf"
+  drawLayerControl: function() {
+    if(
+      CartoDbLib.majorroads 
+      && CartoDbLib.internalroads
+      && CartoDbLib.splayer
+      && CartoDbLib.lhlayer
+	  && CartoDbLib.fslayer
+    ) {
+      L.control.layers(CartoDbLib.baseMaps, {
+        "Major Roads": CartoDbLib.majorroads,
+        "Internal Roads": CartoDbLib.internalroads,
+        "Special Purpose Districts": CartoDbLib.splayer,
+        "Limited Height Districts": CartoDbLib.lhlayer,
+		"fire services": CartoDbLib.fslayer
+      }, { collapsed: false, autoZIndex: true }).addTo(CartoDbLib.map);
     }
-    else if (zone_class.substring(0, 'PD'.length) === 'PD') {
-      title = 'Planned Development';
-      description = "Tall buildings, campuses, and other large developments that must be negotiated with city planners. Developers gain freedom in building design, but must work with city to ensure project serves and integrates with surrounding neighborhood.";
-      zone_class_link = "PD";
-      project_link = "https://gisapps.cityofchicago.org/gisimages/zoning_pds/" + zone_class.replace(" ","") + ".pdf"
+  },
 
-      //https://gisapps.cityofchicago.org/gisimages/zoning_pds/PD43.pdf
-    }
-    else {
-      title = ZoningTable[zone_class].district_title;
-      description = ZoningTable[zone_class].juan_description;
-      zone_class_link = zone_class;
-      project_link = "";
-    }
+  getZoneInfo: function(zonedist) {
+   
+    //title = ZoningTable[zonedist].district_title;
+    //description = ZoningTable[zone_class].juan_description;
+    //zone_class_link = zone_class;
+    //project_link = "";
+    
+     // console.log(zonedist);
+     // console.log(ZoningTable[zonedist]);
 
+     var z = ZoningTable[zonedist];
     return {
-      'title': title, 
-      'description': description, 
-      'zone_class_link': zone_class_link, 
-      'zone_icon': CartoDbLib.getZoneIcon(zone_class),
-      'project_link': project_link
+      'shortdescription': z.shortdescription,
+      'description': z.description, 
+      'url': z.url, 
+      'zone_icon': CartoDbLib.getZoneIcon(zonedist)
+      // 'project_link': project_link
     };
   },
 
-  getZoneIcon: function(zone_class) {
-    var zone_prefix = zone_class.replace( new RegExp("[^A-Z]","gm"),"");
+  getZoneIcon: function(zonedist) {
+    var zone_prefix = zonedist.substr(0,1);
 
     var zone_icon = '';
     switch(zone_prefix) {
-      case 'B'   : zone_icon = 'commercial'; break;
       case 'C'   : zone_icon = 'commercial'; break;
       case 'M'   : zone_icon = 'industrial'; break;
       case 'R'   : zone_icon = 'residential'; break;
-      case 'RS'  : zone_icon = 'residential'; break;
-      case 'RT'  : zone_icon = 'residential'; break;
-      case 'RTA' : zone_icon = 'residential'; break;
-      case 'RM'  : zone_icon = 'residential'; break;
-      case 'PD'  : zone_icon = 'government'; break;
-      case 'PMD' : zone_icon = 'industrial'; break;
-      case 'DX'  : zone_icon = 'commercial'; break;
-      case 'DC'  : zone_icon = 'commercial'; break;
-      case 'DR'  : zone_icon = 'residential'; break;
-      case 'DS'  : zone_icon = 'commercial'; break;
-      case 'T'   : zone_icon = 'trains'; break;
-      case 'POS' : zone_icon = 'parks-entertainment'; break;
+      case 'P' : zone_icon = 'parks-entertainment'; break;
     }
 
     return zone_icon;
@@ -187,34 +317,35 @@ var CartoDbLib = {
       CartoDbLib.map.removeLayer(CartoDbLib.lastClickedLayer);
     }
     $.address.parameter('id', cartodb_id);
-    var sql = new cartodb.SQL({user: 'datamade', format: 'geojson'});
+    var sql = new cartodb.SQL({user: 'votedevin', format: 'geojson'});
     sql.execute('select * from ' + CartoDbLib.tableName + ' where cartodb_id = {{cartodb_id}}', {cartodb_id:cartodb_id})
     .done(function(data){
       var shape = data.features[0];
       CartoDbLib.lastClickedLayer = L.geoJson(shape);
       CartoDbLib.lastClickedLayer.addTo(CartoDbLib.map);
-      CartoDbLib.lastClickedLayer.setStyle({weight: 2, fillOpacity: 0, color: '#000'});
+      CartoDbLib.lastClickedLayer.setStyle({weight: 3, fillOpacity: 0, opacity: 1, color: '#FFF'});
       CartoDbLib.map.fitBounds(CartoDbLib.lastClickedLayer.getBounds(), {maxZoom: 16});
 
       // show custom popup
       var props = shape.properties;
-      var zone_info = CartoDbLib.getZoneInfo(props.zone_class);
+      console.log('props',props);
+      var zone_info = CartoDbLib.getZoneInfo(props.zonedist);
+      console.log(zone_info);
       var popup_content = "\
         <h4>\
           <img src='/images/icons/" + zone_info.zone_icon + ".png' />\
-          <a href='/zone/" + zone_info.zone_class_link + "/'>" + props.zone_class + "\
-            <small>" + zone_info.title + "</small>\
+          <a href='/zone/" + zone_info.url + "/'>" + props.zonedist + "\
+            <small>" + zone_info.shortdescription + "</small>\
           </a>\
         </h4>\
         <p><strong>What's here?</strong><br />\
         " + zone_info.description + "\
-        <a href='/zone/" + zone_info.zone_class_link + "/'>Learn&nbsp;more&nbsp;»</a></p>\
+        <a href='" + zone_info.url + "'>Learn&nbsp;more&nbsp;»</a></p>\
         ";
 
-      if (zone_info.project_link != "")
-        popup_content += "<p><a target='_blank' href='" + zone_info.project_link + "'>Read the full development plan for " + props.zone_class + "&nbsp;»</a></p>"
+      // if (zone_info.project_link != "")
+      //   popup_content += "<p><a target='_blank' href='" + zone_info.project_link + "'>Read the full development plan for " + props.zone_class + "&nbsp;»</a></p>"
 
-      // console.log(click_latlng);
       if (click_latlng) {
         CartoDbLib.popup = L.popup()
         .setContent(popup_content)
@@ -248,10 +379,10 @@ var CartoDbLib = {
             iconAnchor: [10, 32]
           }))}).addTo(CartoDbLib.map);
 
-          var sql = new cartodb.SQL({user: 'datamade', format: 'geojson'});
+          var sql = new cartodb.SQL({user: 'dev', format: 'geojson'});
           sql.execute('select cartodb_id, the_geom from ' + CartoDbLib.tableName + ' where ST_Intersects( the_geom, ST_SetSRID(ST_POINT({{lng}}, {{lat}}) , 4326))', {lng:CartoDbLib.currentPinpoint[1], lat:CartoDbLib.currentPinpoint[0]})
           .done(function(data){
-            // console.log(data);
+          
             CartoDbLib.getOneZone(data.features[0].properties.cartodb_id, CartoDbLib.currentPinpoint)
           }).error(function(e){console.log(e)});
 
@@ -314,3 +445,4 @@ var CartoDbLib = {
     return decodeURIComponent(text);
   }
 }
+

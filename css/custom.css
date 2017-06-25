@@ -1,26 +1,33 @@
 body {
   font-family:Chicago,Verdana,sans-serif;
-  font-size:14px;
+  font-size:12px;
+  overflow:hidden;
+  height:auto;
 }
 
 h1,h2,h3{line-height:inherit;}
 
-h5 {margin-top: 0px ; margin-bottom: 2px;}
-
-a { color: #D9534F; }
+h5 {margin-top: 0px ; margin-bottom: 8px;}
 
 label { font-weight: normal;}
 
 .nav-pills > li.active > a { color: #D9534F; background-color: #FFF; }
 
 .navbar {
-  margin-bottom: 10px;
+  margin-bottom: 0px;
 }
 
-.navbar-inverse { background-color: #F7F7F7;}
+.form-control {
+	font-size:10px;
+	max-height:26px;
+	padding-left:30px;
+}
+
+
+.navbar-inverse { background-color: #0d4f67;}
 
 .navbar .brand {
-  padding: 10px 0 7px 15px;
+  padding: 0px;
 }
 
 .navbar .navbar-text {
@@ -32,16 +39,27 @@ label { font-weight: normal;}
   padding-top: 28px;
 }
 
+#leaflet-control{
+	
+}
+
 .well {
   padding:10px 15px;
 }
 
 .well, .panel-group {
-  margin-bottom: 10px;
+  margin-bottom: auto;
 }
 
 #mapCanvas img {
   max-width: none;
+}
+.leaflet-container {
+	height:100% !important;
+}
+
+#mapholder {
+	height:863px;
 }
 
 .zone-box {
@@ -115,13 +133,16 @@ label { font-weight: normal;}
 }
 
 .leaflet-google-layer{
-    z-index: 0 !important;
+    z-index: 4 !important;
 }
 .leaflet-map-pane{
     z-index: 100;
 }
 
-.info {
+.leaflet-layer{
+}
+
+.info, .coinfo, .spinfo {
     padding: 6px 8px;
     font: 14px/16px Arial, Helvetica, sans-serif;
     background: white;
@@ -132,4 +153,64 @@ label { font-weight: normal;}
 .info h4 {
     margin: 0 0 5px;
     color: #777;
+}
+
+.legendIcon {
+    height: 23px;
+    width: 23px;
+    border: 2px solid;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.co {
+  border-color: blue;
+  background: rgba(0, 0, 255, 0.27);
+}
+
+.sp {
+  border-color: #E2651A;
+  background: rgba(241, 116, 24, 0.41);
+}
+
+.lh {
+  border-color: #A452BF;
+  background: rgba(159, 66, 214, 0.37);
+}
+
+#twitter-widget-0 {
+  margin-top: 38px;
+}
+
+.fb_iframe_widget {
+      margin-top: 38px;
+    margin-left: 13px;
+}
+
+.info.leaflet-control {
+  position: relative;
+  top: -30px;
+}
+
+nav {
+  height:84px;
+}
+
+.nopad {
+	padding : 0px;
+}
+
+#search_address {
+	position: relative;
+}
+
+table#villagealott, th, td, label, a {
+	cursor : pointer;
+	color: #000;
+}
+
+#filterbar {
+    overflow-y:scroll;
+	position:relative;
+	max-height:863px;
 }

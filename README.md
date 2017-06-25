@@ -1,8 +1,6 @@
-![second city zoning](http://i.imgur.com/J6oFuK7.gif)
+# Gotham Zoning
 
-# 2nd City Zoning
-
-2nd City Zoning is an interactive map that lets you:
+Gotham is an interactive map that lets you:
 
 -   find out **how your building is zoned**
 -   learn **where to locate your business**
@@ -11,13 +9,13 @@
 To make Chicago’s zoning code digestible by humans, we took inspiration
 from one of our favorite games: [Sim City 2000](http://en.wikipedia.org/wiki/SimCity_2000). It started with the color scheme and from there we got a little carried away. Graphics, sounds, music, oh my.
 
-2nd City Zoning is entirely [open
+Like all [Open City](http://opencityapps.org) apps, 2nd City Zoning is entirely [open
 source](http://secondcityzoning.org/about#code) and built with [open data](http://secondcityzoning.org/about#data).
 
 ## Installation
 
 <pre>
-  $ git clone git@github.com:datamade/second-city-zoning.git
+  $ git clone git@github.com:open-city/second-city-zoning.git
   $ cd site_template
   $ gem install jekyll
   $ jekyll serve -w
@@ -41,7 +39,7 @@ source](http://secondcityzoning.org/about#code) and built with [open data](http:
 ## Errors / Bugs
 
 If something is not behaving intuitively, it is a bug, and should be reported.
-Report it here: https://github.com/datamade/second-city-zoning/issues
+Report it here: https://github.com/open-city/second-city-zoning/issues
 
 
 ## Note on Patches/Pull Requests
@@ -55,4 +53,4 @@ Report it here: https://github.com/datamade/second-city-zoning/issues
 
 Copyright (c) 2013 Derek Eder and Juan-Pablo Velez of Open City. Released under the MIT License.
 
-[See LICENSE for details](https://github.com/datamade/second-city-zoning/blob/master/LICENSE)
+[See LICENSE for details](https://github.com/open-city/second-city-zoning/blob/master/LICENSE)
