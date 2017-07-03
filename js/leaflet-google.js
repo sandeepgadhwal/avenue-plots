@@ -150,6 +150,6 @@ L.Google = L.Class.extend({
   },
 
   onReposition: function() {
-    //google.maps.event.trigger(this._google, "resize");
+    google.maps.event.trigger(this._google, "resize");
   }
 });

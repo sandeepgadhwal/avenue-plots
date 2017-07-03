@@ -6,35 +6,40 @@ var CartoDbLib = {
   lastClickedLayer: null,
   locationScope:   "Vijayawada",
   currentPinpoint: true,
-  layerUrl: 'http://localhost/user/dev/api/v2/viz/062ed0b4-5918-11e7-bacc-0242ac110002/viz.json',
-  tableName: 'major_roads',
+  layerUrl: '',
+  tableName: 'onlylanduse',
   maptiks_tracking_code: '',
 
   initialize: function(){
 
     //reset filters
-    $("#search_address").val(CartoDbLib.convertToPlainString($.address.parameter('address')));
-    $(":checkbox").attr("checked", "checked");
+    //$("#search_address").val(CartoDbLib.convertToPlainString($.address.parameter('address')));
 
-    geocoder = new google.maps.Geocoder();
+    $(":checkbox").attr("checked", "checked");
+	$('#multiface').prop('checked', false);
+
+    //geocoder = new google.maps.Geocoder();
 
     // initiate leaflet map
     if (!CartoDbLib.map) {
       CartoDbLib.map = new L.Map('mapCanvas', { 
-        center: CartoDbLib.map_centroid,
-        zoom: CartoDbLib.defaultZoom,
-        layers: CartoDbLib.basemap
-      });
+        //center: CartoDbLib.map_centroid,
+        //zoom: CartoDbLib.defaultZoom,
+        //layers: CartoDbLib.basemap
+     });
 	  
+	
+	//var api_key = 'pk.eyJ1IjoiZGlnaXRhbGdsb2JlIiwiYSI6ImNpcGg5dDdjdDAxMmt1OW5qdzUzMWMxamUifQ.8nfM3INfFUehVzKhmNOrJQ';
+	//vrecent = L.tileLayer('https://{s}.tiles.mapbox.com/v4/digitalglobe.nal0g75k/{z}/{x}/{y}.png?access_token=' + api_key, {
+    //minZoom: 1,
+    //maxZoom: 19,
+    //attribution: '(c) <a href="https://microsites.digitalglobe.com/interactive/basemap_vivid/">DigitalGlobe</a>'
+	//})//.addTo(CartoDbLib.map);
 	  
-	var api_key = 'pk.eyJ1IjoiZGlnaXRhbGdsb2JlIiwiYSI6ImNpcGg5dDdjdDAxMmt1OW5qdzUzMWMxamUifQ.8nfM3INfFUehVzKhmNOrJQ';
-	vrecent = L.tileLayer('https://{s}.tiles.mapbox.com/v4/digitalglobe.nal0g75k/{z}/{x}/{y}.png?access_token=' + api_key, {
-    minZoom: 1,
-    maxZoom: 19,
-    attribution: '(c) <a href="https://microsites.digitalglobe.com/interactive/basemap_vivid/">DigitalGlobe</a>'
-	}).addTo(CartoDbLib.map);
-	  
+	  //var googleLayer = new L.Google('ROADMAP');
       //CartoDbLib.google = new L.Google('ROADMAP', {animate: false});
+	  
+	  CartoDbLib.satellite = L.tileLayer('http://mt0.google.com/vt/lyrs=y&hl=en&x={x}&y={y}&z={z}&s=Ga').addTo(CartoDbLib.map);
         
       /*CartoDbLib.satellite = L.tileLayer('https://{s}.tiles.mapbox.com/v3/datamade.k92mcmc8/{z}/{x}/{y}.png', {
         attribution: '<a href="http://www.mapbox.com/about/maps/" target="_blank">Terms &amp; Feedback</a>',
@@ -119,7 +124,7 @@ var CartoDbLib = {
       cartodb.createLayer(CartoDbLib.map, CartoDbLib.layerUrl )
         .addTo(CartoDbLib.map)
         .done(function(layer) {
-          CartoDbLib.majorroads = layer;
+          CartoDbLib.onlylanduse = layer;
           var sublayer = layer.getSubLayer(0);
           sublayer.setInteraction(false);
           sublayer.on('featureOver', function(e, latlng, pos, data, subLayerIndex) {
@@ -154,6 +159,40 @@ var CartoDbLib = {
           //console.log('ERROR')
           //console.log(e)
         }); 
+		
+		//add the Commercial Overlay Layer
+        var layerStyle = $('#onlylanduse-style').text();
+        cartodb.createLayer(CartoDbLib.map, {
+          user_name: 'dev',
+          type: 'cartodb',
+          sublayers: [{
+            sql: "SELECT * FROM onlylanduse",
+            cartocss: layerStyle,
+          }],
+		  extra_params: {
+			  map_key: "c6d0788f0f96c7db86fedfff84594aa60d2f8c08"
+		  }
+        })
+        .addTo(CartoDbLib.map)
+        .done(function(layer) {
+          
+          var sublayer = layer.getSubLayer(0);
+          sublayer.setInteraction(false);
+		  sublayer.setInteractivity('cartodb_id');
+          sublayer.on('featureOver', function(e, latlng, pos, data, subLayerIndex) {
+            $('#mapCanvas div').css('cursor','pointer');
+            CartoDbLib.coinfo.update(data);
+            console.log(data);
+          });
+
+          sublayer.on('featureOut', function(e, latlng, pos, data, subLayerIndex) {
+            $('#mapCanvas div').css('cursor','inherit');
+            CartoDbLib.coinfo.clear();
+          });
+
+          CartoDbLib.onlylanduse = layer;
+          CartoDbLib.drawLayerControl();
+        })
 
         //add the Commercial Overlay Layer
         var layerStyle = $('#internal_roads-style').text();
@@ -172,7 +211,7 @@ var CartoDbLib = {
         .done(function(layer) {
           
           var sublayer = layer.getSubLayer(0);
-          sublayer.setInteraction(true);
+          sublayer.setInteraction(false);
 		  sublayer.setInteractivity('cartodb_id');
           sublayer.on('featureOver', function(e, latlng, pos, data, subLayerIndex) {
             $('#mapCanvas div').css('cursor','pointer');
@@ -190,21 +229,21 @@ var CartoDbLib = {
         })
 
         //add the special purpose districts layer
-        var layerStyle = $('#splayer-style').text();
+        var layerStyle = $('#roads-style').text();
         cartodb.createLayer(CartoDbLib.map, {
-          user_name: 'votedevin',
+          user_name: 'dev',
           type: 'cartodb',
           sublayers: [{
-            sql: "SELECT * FROM road",
+            sql: "SELECT * FROM major_roads",
             cartocss: layerStyle
           }]
         })
-     
+		.addTo(CartoDbLib.map)
         .done(function(layer) {
 
           var sublayer = layer.getSubLayer(0);
-          sublayer.setInteraction(true);
-          sublayer.setInteractivity('cartodb_id,sdname');
+          sublayer.setInteraction(false);
+          sublayer.setInteractivity('cartodb_id');
           sublayer.on('featureOver', function(e, latlng, pos, data, subLayerIndex) {
             console.log('featureOver');
             $('#mapCanvas div').css('cursor','pointer');
@@ -216,45 +255,84 @@ var CartoDbLib = {
             CartoDbLib.coinfo.clear();
           });
 
-          CartoDbLib.splayer = layer;
+          CartoDbLib.majorroads = layer;
           CartoDbLib.drawLayerControl();
         })
 
-        var layerStyle = $('#lhlayer-style').text();
+		var layerStyle = $('#colonies-style').text();
         console.log(layerStyle);
         cartodb.createLayer(CartoDbLib.map, {
-          user_name: 'votedevin',
+          user_name: 'dev',
           type: 'cartodb',
           sublayers: [{
-            sql: "SELECT * FROM nylh",
+            sql: "SELECT * FROM colonies",
             cartocss: layerStyle
           }]
         })
-        //.addTo(CartoDbLib.map)
+        .addTo(CartoDbLib.map)
         .done(function(layer) {
-          CartoDbLib.lhlayer = layer;
+          CartoDbLib.colonies = layer;
+		  layer.setZIndex(100);
       
           CartoDbLib.drawLayerControl();
         })
 		
-		var layerStyle = $('#fslayer-style').text();
+		
+		var layerStyle = $('#sectors-style').text();
         console.log(layerStyle);
         cartodb.createLayer(CartoDbLib.map, {
-          user_name: 'votedevin',
+          user_name: 'dev',
           type: 'cartodb',
           sublayers: [{
-            sql: "SELECT * FROM fsny",
+            sql: "SELECT * FROM sectors",
             cartocss: layerStyle
           }]
         })
-        //.addTo(CartoDbLib.map)
+        .addTo(CartoDbLib.map)
         .done(function(layer) {
-          CartoDbLib.fslayer = layer;
+          CartoDbLib.sectors = layer;
+		  layer.setZIndex(100);
+      
+          CartoDbLib.drawLayerControl();
+        })
+		
+		var layerStyle = $('#townships-style').text();
+        console.log(layerStyle);
+        cartodb.createLayer(CartoDbLib.map, {
+          user_name: 'dev',
+          type: 'cartodb',
+          sublayers: [{
+            sql: "SELECT * FROM townships",
+            cartocss: layerStyle
+          }]
+        })
+        .addTo(CartoDbLib.map)
+        .done(function(layer) {
+          CartoDbLib.townships = layer;
+		  layer.setZIndex(100);
       
           CartoDbLib.drawLayerControl();
         })
 
-
+		var layerStyle = $('#ringroad-style').text();
+        console.log(layerStyle);
+        cartodb.createLayer(CartoDbLib.map, {
+          user_name: 'dev',
+          type: 'cartodb',
+          sublayers: [{
+            sql: "SELECT * FROM ringroads",
+            cartocss: layerStyle
+          }]
+        })
+        .addTo(CartoDbLib.map)
+        .done(function(layer) {
+          CartoDbLib.ringroad = layer;
+		  layer.setZIndex(100);
+      
+          CartoDbLib.drawLayerControl();
+        })
+		
+		loadfilter();
       }
 
     CartoDbLib.doSearch();
@@ -262,18 +340,22 @@ var CartoDbLib = {
 
   drawLayerControl: function() {
     if(
-      CartoDbLib.majorroads 
+      CartoDbLib.onlylanduse 
       && CartoDbLib.internalroads
-      && CartoDbLib.splayer
-      && CartoDbLib.lhlayer
-	  && CartoDbLib.fslayer
+      && CartoDbLib.majorroads
+      && CartoDbLib.colonies
+	  && CartoDbLib.sectors
+	  && CartoDbLib.townships
+	  && CartoDbLib.ringroad
     ) {
       L.control.layers(CartoDbLib.baseMaps, {
-        "Major Roads": CartoDbLib.majorroads,
+        "Surrounding Landuse": CartoDbLib.onlylanduse,
         "Internal Roads": CartoDbLib.internalroads,
-        "Special Purpose Districts": CartoDbLib.splayer,
-        "Limited Height Districts": CartoDbLib.lhlayer,
-		"fire services": CartoDbLib.fslayer
+        "Major Roads": CartoDbLib.majorroads,
+        "Colonies": CartoDbLib.colonies,
+		"Sectors": CartoDbLib.sectors,
+		"Townships": CartoDbLib.townships,
+		"Ringroad": CartoDbLib.ringroad
       }, { collapsed: false, autoZIndex: true }).addTo(CartoDbLib.map);
     }
   },
